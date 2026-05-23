@@ -42,8 +42,10 @@ header h1 .logo{width:24px;height:24px;border-radius:6px;
 .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;
   box-shadow:var(--shadow)}
 .card h2{margin:0 0 10px;font-size:11px;letter-spacing:1.4px;
-  text-transform:uppercase;color:var(--mute);display:flex;align-items:center;gap:8px}
-.card h2 .dot{width:6px;height:6px;border-radius:50%;background:var(--ac)}
+  text-transform:uppercase;color:var(--mute);display:flex;align-items:center;gap:8px;justify-content:space-between;flex-wrap:wrap}
+.card h2 .title{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
+.card h2 .dot{width:6px;height:6px;border-radius:50%;background:var(--ac);flex:0 0 auto}
+.card h2 .meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;text-transform:none;letter-spacing:0;font-size:11px;color:var(--ink)}
 label{display:block;font-size:11px;color:var(--mute);margin:7px 0 3px}
 input,select,button,textarea{width:100%;background:#080c12;color:var(--ink);
   border:1px solid var(--line);border-radius:7px;padding:8px 9px;
@@ -136,6 +138,40 @@ hr{border:0;border-top:1px solid var(--line);margin:14px 0}
 ::-webkit-scrollbar{width:8px;height:8px}
 ::-webkit-scrollbar-thumb{background:#1a2230;border-radius:4px}
 ::-webkit-scrollbar-thumb:hover{background:#2a3548}
+
+/* chart toolbar */
+.chart-toolbar{display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap}
+.chart-toolbar .tb-group{display:flex;gap:0;background:#080c12;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+.chart-toolbar .tb-btn{padding:6px 11px;width:auto;background:transparent;color:var(--ink);border:none;border-right:1px solid var(--line);box-shadow:none;font-weight:500;font-size:13px;border-radius:0}
+.chart-toolbar .tb-group .tb-btn:last-child{border-right:none}
+.chart-toolbar .tb-btn:hover{background:#0f141d;color:var(--ac);transform:none}
+.tb-btn{padding:6px 14px;width:auto;flex:0 0 auto}
+.tb-hint{margin-left:auto;font:10px var(--mono);color:var(--mute)}
+.replay-bar{display:flex;align-items:center;gap:10px;margin-top:8px;padding:8px 10px;background:#080c12;border:1px solid var(--line);border-radius:8px}
+.replay-bar .replay-lbl{font:11px var(--mono);color:var(--mute);flex:0 0 auto}
+.replay-bar input[type=range]{flex:1;width:auto;background:transparent;border:none;padding:0}
+.replay-bar .replay-time{font:11px var(--mono);color:var(--ac);flex:0 0 100px;text-align:right;background:#0f141d;padding:3px 8px;border-radius:4px;border:1px solid var(--line)}
+.replay-bar .tb-btn{flex:0 0 auto}
+
+/* anomaly badges in card header */
+.meta .badge{font:10px var(--mono);padding:3px 8px;border-radius:10px;border:1px solid;display:inline-flex;align-items:center;gap:3px;white-space:nowrap}
+
+/* misc layout polish */
+.kpi .val{font:600 17px var(--mono);margin-top:4px;letter-spacing:-0.3px}
+.kpi{padding:11px 12px}
+.section-title{font-size:11px;letter-spacing:1.6px;text-transform:uppercase;
+  color:var(--mute);margin:20px 4px 10px;display:flex;align-items:center;gap:10px;font-weight:600}
+.section-title::before{content:"";width:24px;height:2px;background:linear-gradient(90deg,var(--ac),transparent);border-radius:2px}
+
+/* better range slider */
+input[type=range]{appearance:none;-webkit-appearance:none;height:6px;background:#1a2230;border-radius:3px;border:none;padding:0;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;width:14px;height:14px;background:linear-gradient(180deg,#5eead4,#34d4be);border-radius:50%;border:2px solid #04221d;cursor:grab;box-shadow:0 0 8px rgba(94,234,212,.4)}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;background:#5eead4;border-radius:50%;border:2px solid #04221d;cursor:grab}
+
+/* better selects with arrow */
+select{appearance:none;-webkit-appearance:none;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path fill='%237a879d' d='M6 8L2 4h8z'/></svg>");
+  background-repeat:no-repeat;background-position:right 9px center;padding-right:28px}
 </style>
 </head>
 <body>
@@ -297,7 +333,7 @@ hr{border:0;border-top:1px solid var(--line);margin:14px 0}
 
 <main>
   <div class="kpis">
-    <div class="kpi"><div class="lbl">Last</div><div class="val" id="kPrice">—</div><div class="sub" id="kChg">—</div></div>
+    <div class="kpi"><div class="lbl">Last <span id="wsDot" title="WebSocket status" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#7a879d;margin-left:4px;vertical-align:middle"></span></div><div class="val" id="kPrice">—</div><div class="sub" id="kChg">—</div></div>
     <div class="kpi"><div class="lbl">24h vol</div><div class="val" id="kVol24">—</div><div class="sub">USDT</div></div>
     <div class="kpi"><div class="lbl">σ ann.</div><div class="val" id="kVol">—</div><div class="sub">vol tahunan</div></div>
     <div class="kpi"><div class="lbl">RSI(14)</div><div class="val" id="kRsi">—</div><div class="sub" id="kRsiTag">—</div></div>
@@ -309,9 +345,30 @@ hr{border:0;border-top:1px solid var(--line);margin:14px 0}
 
   <div class="section-title">Candlestick + overlays</div>
   <div class="card">
-    <h2>Price action — MA / BB / S&R / Fibonacci</h2>
+    <h2><span class="title">Price action — MA / BB / S&R / Fibonacci</span><span class="meta" id="anomalyBadges"></span></h2>
     <canvas id="cCandle" style="height:380px"></canvas>
     <canvas id="cVol" style="height:80px;margin-top:6px"></canvas>
+    <div class="chart-toolbar">
+      <div class="tb-group">
+        <button class="ghost tb-btn" id="panFarL" title="ke awal data">⏮</button>
+        <button class="ghost tb-btn" id="panL" title="geser kiri 50 bar">◀</button>
+      </div>
+      <div class="tb-group">
+        <button class="ghost tb-btn" id="zoomOut" title="zoom out">−</button>
+        <button class="ghost tb-btn" id="zoomIn" title="zoom in">+</button>
+      </div>
+      <div class="tb-group">
+        <button class="ghost tb-btn" id="panR" title="geser kanan 50 bar">▶</button>
+        <button class="ghost tb-btn" id="panFarR" title="ke live">⏭</button>
+      </div>
+      <span class="tb-hint">drag · wheel zoom · double-click reset</span>
+    </div>
+    <div class="replay-bar">
+      <span class="replay-lbl">⏪ Replay</span>
+      <input id="replaySlider" type="range" min="0" max="100" value="100" step="1">
+      <span id="replayLabel" class="replay-time">live</span>
+      <button class="ghost tb-btn" id="replayReset">↻ live</button>
+    </div>
     <div class="legend">
       <span><i style="background:#5eead4"></i>MA20</span>
       <span><i style="background:#a78bfa"></i>MA50</span>
@@ -440,6 +497,22 @@ hr{border:0;border-top:1px solid var(--line);margin:14px 0}
         <span><i style="background:#22c55e"></i>short liq</span>
         <span style="color:var(--mute)">5x · 10x · 20x · 25x · 50x · 100x</span>
       </div>
+    </div>
+  </div>
+
+  <div class="charts" style="margin-top:14px">
+    <div class="card">
+      <h2>📡 Cross-exchange funding & spread</h2>
+      <div id="xFundTable" style="overflow:auto;font:11px var(--mono);min-height:80px">loading…</div>
+      <div class="legend"><span style="color:var(--mute)">funding 8h · spread vs median</span></div>
+    </div>
+    <div class="card">
+      <h2><span class="title">📰 News feed</span><span class="meta" style="font-size:10px;color:var(--mute)">multi-source RSS</span></h2>
+      <div class="row" style="margin-bottom:6px">
+        <input id="newsFilter" placeholder="filter symbol (BTC, SOL, ...)" style="flex:1">
+        <button class="ghost" id="newsRefresh" style="flex:0 0 auto">↻</button>
+      </div>
+      <div id="newsList" style="max-height:280px;overflow:auto;font:11px var(--mono)">loading…</div>
     </div>
   </div>
 
@@ -657,43 +730,55 @@ function drawGrid(ctx,W,H,pad,min,max,fmtFn){
 }
 
 /* ===== candlestick + volume + overlays ===== */
+/* live chart view state — pan/zoom */
+window.__chartView={offset:0,zoom:1}; // offset=bars from end, zoom multiplier
+
 function drawCandles(c,ohlcv,inds,sr,fib){
   const{ctx,W,H}=setupCanvas(c);ctx.clearRect(0,0,W,H);
-  const N=Math.min(150,ohlcv.length);
-  const data=ohlcv.slice(-N);
+  const baseN=150;
+  const v=window.__chartView||{offset:0,zoom:1};
+  const visN=Math.max(20,Math.min(ohlcv.length,Math.floor(baseN*v.zoom)));
+  const off=Math.max(0,Math.min(ohlcv.length-visN,v.offset|0));
+  const endIdx=ohlcv.length-off;
+  const startIdx=Math.max(0,endIdx-visN);
+  const N=endIdx-startIdx;
+  const data=ohlcv.slice(startIdx,endIdx);
+  // RIGHT MARGIN — kasih ruang ~12% di kanan (TradingView style) cuma kalo udah di live (off=0)
+  const rightSlots=off===0?Math.floor(visN*0.12):0;
+  const totalSlots=N+rightSlots;
   const highs=data.map(r=>r[2]),lows=data.map(r=>r[3]);
   let min=Math.min(...lows),max=Math.max(...highs);
-  // include MA/BB in range
-  const ma20=inds.ma20.slice(-N),ma50=inds.ma50.slice(-N),ma200=inds.ma200.slice(-N);
-  const bbU=inds.bb.up.slice(-N),bbL=inds.bb.dn.slice(-N);
+  const ma20=inds.ma20.slice(startIdx,endIdx),ma50=inds.ma50.slice(startIdx,endIdx),ma200=inds.ma200.slice(startIdx,endIdx);
+  const bbU=inds.bb.up.slice(startIdx,endIdx),bbL=inds.bb.dn.slice(startIdx,endIdx);
   [...ma20,...ma50,...ma200,...bbU,...bbL].forEach(v=>{if(v!=null){if(v<min)min=v;if(v>max)max=v;}});
-  // SR & fib expand
   [...sr.res,...sr.sup,...fib.map(f=>f.price)].forEach(v=>{if(v<min)min=v;if(v>max)max=v;});
   const span=max-min;min-=span*0.02;max+=span*0.02;
   const pad=22;
-  const x=i=>pad+((W-pad*2)*i/(N-1));
+  const x=i=>pad+((W-pad*2)*i/(totalSlots-1));
   const y=v=>H-pad-(H-pad*2)*((v-min)/(max-min||1));
   drawGrid(ctx,W,H,pad,min,max,v=>fmtP(v));
-  // Bollinger band
   ctx.fillStyle='rgba(34,211,238,0.07)';ctx.beginPath();
   let started=false;
   for(let i=0;i<N;i++)if(bbU[i]!=null){if(!started){ctx.moveTo(x(i),y(bbU[i]));started=true;}else ctx.lineTo(x(i),y(bbU[i]));}
   for(let i=N-1;i>=0;i--)if(bbL[i]!=null)ctx.lineTo(x(i),y(bbL[i]));
   ctx.closePath();ctx.fill();
-  // Fib lines
   fib.forEach(f=>{
     const yy=y(f.price);
     ctx.strokeStyle='rgba(167,139,250,0.25)';ctx.setLineDash([2,4]);ctx.lineWidth=1;
     ctx.beginPath();ctx.moveTo(pad,yy);ctx.lineTo(W-pad,yy);ctx.stroke();
     ctx.setLineDash([]);
-    ctx.fillStyle='#a78bfa99';ctx.font='9px ui-monospace';
-    ctx.fillText('fib '+(f.r*100).toFixed(1)+'%  '+fmtP(f.price),W-pad-105,yy-2);
+    // pindah ke KIRI biar ngga tabrak R/S boxes di kanan
+    const lbl='fib '+(f.r*100).toFixed(1)+'%  '+fmtP(f.price);
+    ctx.font='9px ui-monospace';
+    const tw=ctx.measureText(lbl).width;
+    ctx.fillStyle='rgba(10,15,25,0.7)';
+    ctx.fillRect(pad+2,yy-7,tw+6,12);
+    ctx.fillStyle='#a78bfacc';
+    ctx.fillText(lbl,pad+5,yy+2);
   });
-  // S/R
   sr.res.forEach(p=>{const yy=y(p);ctx.strokeStyle='rgba(239,68,68,0.45)';ctx.setLineDash([6,3]);ctx.beginPath();ctx.moveTo(pad,yy);ctx.lineTo(W-pad,yy);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#ef444466';ctx.fillRect(W-pad-78,yy-7,76,12);ctx.fillStyle='#fff';ctx.font='9px ui-monospace';ctx.fillText('R '+fmtP(p),W-pad-75,yy+2);});
   sr.sup.forEach(p=>{const yy=y(p);ctx.strokeStyle='rgba(34,197,94,0.45)';ctx.setLineDash([6,3]);ctx.beginPath();ctx.moveTo(pad,yy);ctx.lineTo(W-pad,yy);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#22c55e66';ctx.fillRect(W-pad-78,yy-7,76,12);ctx.fillStyle='#fff';ctx.font='9px ui-monospace';ctx.fillText('S '+fmtP(p),W-pad-75,yy+2);});
-  // candles
-  const cw=Math.max(2,(W-pad*2)/N*0.7);
+  const cw=Math.max(1.5,(W-pad*2)/totalSlots*0.7);
   for(let i=0;i<N;i++){
     const[ts,o,h,l,cl]=data[i];
     const xx=x(i);const up=cl>=o;
@@ -703,11 +788,22 @@ function drawCandles(c,ohlcv,inds,sr,fib){
     const top=y(Math.max(o,cl)),bot=y(Math.min(o,cl));
     ctx.fillRect(xx-cw/2,top,cw,Math.max(1,bot-top));
   }
-  // MA lines
   const drawLine=(arr,col,wd)=>{ctx.strokeStyle=col;ctx.lineWidth=wd;ctx.beginPath();let s=false;for(let i=0;i<N;i++){const v=arr[i];if(v==null)continue;if(!s){ctx.moveTo(x(i),y(v));s=true;}else ctx.lineTo(x(i),y(v));}ctx.stroke();};
   drawLine(ma20,'#5eead4',1.5);
   drawLine(ma50,'#a78bfa',1.5);
   drawLine(ma200,'#fbbf24',1.2);
+  // viewport label (kalo lagi pan/zoom) — di pojok kiri-atas dgn background biar kebaca
+  if(off>0||Math.abs(v.zoom-1)>0.05){
+    const t1=new Date(data[0][0]),t2=new Date(data.at(-1)[0]);
+    const fmtT=t=>t.toLocaleString('id-ID',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+    const txt=`${fmtT(t1)} → ${fmtT(t2)}  ·  zoom ${v.zoom.toFixed(2)}x  ·  ${off>0?'-'+off+' bars':'live'}`;
+    ctx.font='10px ui-monospace';
+    const tw=ctx.measureText(txt).width;
+    ctx.fillStyle='rgba(10,15,25,0.85)';
+    ctx.fillRect(pad,pad-2,tw+12,16);
+    ctx.fillStyle='#fbbf24';
+    ctx.fillText(txt,pad+6,pad+9);
+  }
 }
 function drawVolume(c,ohlcv){
   const{ctx,W,H}=setupCanvas(c);ctx.clearRect(0,0,W,H);
@@ -1294,6 +1390,9 @@ async function run(){
     drawLiqMap($('#cLiq'),last);
     if(typeof drawIchiOverlay==='function')drawIchiOverlay($('#cCandle'),ohlcv);
     window.__lastOhlcv=ohlcv; // for backtest
+    window.__lastOhlcvT=Date.now();
+    window.__lastFunding=funding;
+    window.__lastOB=ob;
     if(typeof refreshCorrelation==='function')refreshCorrelation();
     // Pivot points from previous day's H/L/C
     const pp=pivotPoints(Math.max(...highs.slice(-24)),Math.min(...lows.slice(-24)),closes.at(-25)||closes.at(-1));
@@ -2059,6 +2158,544 @@ $('#btRun')?.addEventListener('click',()=>{
 });
 $('#corrRefresh')?.addEventListener('click',refreshCorrelation);
 
+/* ============================================================
+   📡 Cross-exchange funding & spread
+============================================================ */
+async function refreshXFunding(){
+  const sym=$('#symbol').value.trim().toUpperCase()||'BTC/USDT';
+  const cell=$('#xFundTable');if(!cell)return;
+  cell.innerHTML='loading…';
+  const exes=['binance','bybit','okx'];
+  const rows=await Promise.all(exes.map(async e=>{
+    try{
+      const [t,f]=await Promise.all([
+        REST[e].ticker(sym).catch(()=>null),
+        fetchFunding(e,sym),
+      ]);
+      const px=parseFloat(t?.lastPrice||t?.last||0)||null;
+      return{ex:e,price:px,funding:f};
+    }catch{return{ex:e,price:null,funding:null};}
+  }));
+  const valid=rows.filter(r=>r.price);
+  if(!valid.length){cell.innerHTML='<span style="color:var(--mute)">no data</span>';return;}
+  const med=valid.map(r=>r.price).sort((a,b)=>a-b)[Math.floor(valid.length/2)];
+  let html=`<div style="display:grid;grid-template-columns:1fr 1.4fr 1fr 1.2fr;gap:6px;padding:6px 4px;border-bottom:1px solid var(--line);color:var(--mute);font-weight:600">
+    <span>Exchange</span><span>Price</span><span>Spread</span><span>Funding 8h</span></div>`;
+  rows.forEach(r=>{
+    const sp=r.price?((r.price/med-1)*100):null;
+    const spCol=sp==null?'var(--mute)':Math.abs(sp)>0.05?'var(--down)':'var(--up)';
+    const fCol=r.funding==null?'var(--mute)':r.funding>0?'var(--down)':'var(--up)';
+    html+=`<div style="display:grid;grid-template-columns:1fr 1.4fr 1fr 1.2fr;gap:6px;padding:5px 4px;border-bottom:1px solid var(--line);align-items:center">
+      <b style="text-transform:uppercase">${r.ex}</b>
+      <span>${r.price?'$'+fmtP(r.price):'—'}</span>
+      <span style="color:${spCol}">${sp==null?'—':(sp>=0?'+':'')+sp.toFixed(3)+'%'}</span>
+      <span style="color:${fCol}">${r.funding==null?'—':(r.funding>=0?'+':'')+(r.funding*100).toFixed(4)+'%'}</span>
+    </div>`;
+  });
+  cell.innerHTML=html;
+}
+
+/* ============================================================
+   📰 News feed (multi-source RSS via rss2json)
+============================================================ */
+const NEWS_FEEDS=[
+  {name:'Cointelegraph',url:'https://cointelegraph.com/rss'},
+  {name:'Decrypt',url:'https://decrypt.co/feed'},
+  {name:'Bitcoin Magazine',url:'https://bitcoinmagazine.com/feed'},
+  {name:'CoinDesk',url:'https://www.coindesk.com/arc/outboundfeeds/rss/'},
+];
+async function refreshNews(){
+  const list=$('#newsList');if(!list)return;
+  const filter=($('#newsFilter')?.value||'').trim().toUpperCase();
+  list.innerHTML='loading…';
+  try{
+    const all=await Promise.all(NEWS_FEEDS.map(async f=>{
+      try{
+        const r=await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(f.url)}`);
+        if(!r.ok)return [];
+        const j=await r.json();
+        return(j.items||[]).map(it=>({...it,source:f.name}));
+      }catch{return [];}
+    }));
+    let items=all.flat();
+    if(filter)items=items.filter(it=>{
+      const t=(it.title+' '+(it.description||'')).toUpperCase();
+      return t.includes(filter);
+    });
+    items.sort((a,b)=>new Date(b.pubDate)-new Date(a.pubDate));
+    items=items.slice(0,40);
+    if(!items.length){list.innerHTML='<span style="color:var(--mute)">no news</span>';return;}
+    list.innerHTML=items.map(n=>{
+      const t=new Date(n.pubDate);
+      const ago=Math.round((Date.now()-t.getTime())/60000);
+      const agoTxt=ago<60?ago+'m':ago<1440?Math.round(ago/60)+'h':Math.round(ago/1440)+'d';
+      const tu=n.title.toUpperCase();
+      const tags=['BTC','ETH','SOL','XRP','DOGE','PEPE','BNB','ADA','TRUMP','SEC','ETF'].filter(k=>tu.includes(k)).slice(0,3);
+      return `<div style="padding:6px 4px;border-bottom:1px solid var(--line)">
+        <a href="${n.link}" target="_blank" rel="noopener" style="color:var(--text);text-decoration:none;font-weight:500">${n.title}</a>
+        <div style="color:var(--mute);font-size:10px;margin-top:3px">
+          ${n.source} · ${agoTxt} ago${tags.length?' · <span style="color:#fbbf24">'+tags.join(' ')+'</span>':''}
+        </div>
+      </div>`;
+    }).join('');
+  }catch(e){list.innerHTML='<span style="color:var(--down)">news fetch fail: '+e.message+'</span>';}
+}
+$('#newsRefresh')?.addEventListener('click',refreshNews);
+$('#newsFilter')?.addEventListener('change',refreshNews);
+
+/* ============================================================
+   ⚡ WebSocket live price + LIVE CHART (Binance kline stream)
+============================================================ */
+let __ws=null;
+let __wsThrottle=0;
+function setWsDot(state){
+  const d=$('#wsDot');if(!d)return;
+  d.style.background=state==='live'?'#22c55e':state==='connecting'?'#fbbf24':'#7a879d';
+  d.title='WebSocket: '+state;
+}
+function tfToBinance(tf){
+  // map tf var ke interval Binance (TF udah dipake di runner: 5m/15m/1h/4h/1d)
+  return (typeof TF==='string'&&TF)?TF:'1h';
+}
+function startWs(){
+  try{__ws&&__ws.close();}catch{}
+  const ex=$('#exchange').value;
+  if(ex!=='binance'){setWsDot('off');return;}
+  const sym=($('#symbol').value.trim().toLowerCase()||'btcusdt').replace('/','');
+  const tf=tfToBinance();
+  setWsDot('connecting');
+  try{
+    // combined stream: ticker (24h stats) + kline (live OHLC)
+    __ws=new WebSocket(`wss://stream.binance.com:9443/stream?streams=${sym}@miniTicker/${sym}@kline_${tf}`);
+    __ws.onopen=()=>{setWsDot('live');log('ws live · '+sym+' '+tf);};
+    __ws.onmessage=ev=>{
+      try{
+        const msg=JSON.parse(ev.data);
+        const stream=msg.stream||'';
+        const d=msg.data;if(!d)return;
+        // miniTicker → KPI
+        if(stream.endsWith('@miniTicker')){
+          const p=parseFloat(d.c);if(!isFinite(p))return;
+          const el=$('#kPrice');if(el)el.textContent='$'+fmtP(p);
+          const op=parseFloat(d.o);if(isFinite(op)&&op>0){
+            const chg=(p/op-1)*100;
+            const ch=$('#kChg');if(ch){ch.textContent='Δ '+(chg>=0?'+':'')+chg.toFixed(2)+'%';ch.className='sub '+(chg>=0?'up':'down');}
+          }
+          document.title=`$${fmtP(p)} · ${sym.toUpperCase()} — LoxeeMatric`;
+        }
+        // kline → live chart
+        if(stream.includes('@kline_')&&d.k){
+          const k=d.k;
+          const bar=[+k.t,+k.o,+k.h,+k.l,+k.c,+k.v];
+          updateLiveBar(bar,k.x);
+        }
+      }catch{}
+    };
+    __ws.onerror=()=>setWsDot('error');
+    __ws.onclose=()=>setWsDot('off');
+  }catch(e){setWsDot('error');log('ws fail: '+e.message);}
+}
+/* update bar terakhir (atau push bar baru kalo closed) + redraw throttled */
+function updateLiveBar(bar,closed){
+  const o=window.__lastOhlcv;if(!o||!o.length)return;
+  const lastBar=o.at(-1);
+  if(lastBar[0]===bar[0]){
+    // same bar → update high/low/close/volume
+    o[o.length-1]=bar;
+  }else if(bar[0]>lastBar[0]){
+    // new bar
+    o.push(bar);
+    if(o.length>2000)o.shift();
+  }
+  // throttle redraw to max 4fps biar ngga ngehang
+  const now=Date.now();
+  if(now-__wsThrottle<250)return;
+  __wsThrottle=now;
+  // skip redraw kalo replay slider lagi dipake (<100)
+  const sl=$('#replaySlider');
+  if(sl&&+sl.value<100)return;
+  try{
+    const closes=o.map(r=>r[4]),highs=o.map(r=>r[2]),lows=o.map(r=>r[3]);
+    const ma20S=SMA(closes,20),ma50S=SMA(closes,50),ma200S=SMA(closes,200);
+    const bb=BB(closes,20,2);
+    const sr=findSR(highs,lows,closes,5,3);
+    const fib=fibLevels(highs,lows,closes,Math.min(100,o.length));
+    drawCandles($('#cCandle'),o,{ma20:ma20S,ma50:ma50S,ma200:ma200S,bb},sr,fib);
+    drawVolume($('#cVol'),o);
+  }catch{}
+}
+$('#exchange')?.addEventListener('change',()=>setTimeout(startWs,200));
+$('#symbol')?.addEventListener('change',()=>setTimeout(startWs,200));
+/* if TF (timeframe) berubah, restart ws — listen ke tombol tf */
+document.querySelectorAll('[data-tf]').forEach(b=>b.addEventListener('click',()=>setTimeout(startWs,300)));
+
+/* ============================================================
+   ♾️ Infinite history loader — auto-fetch bar lama pas mentok kiri
+============================================================ */
+window.__historyLoading=false;
+async function loadMoreHistory(){
+  if(window.__historyLoading)return;
+  const o=window.__lastOhlcv;if(!o||!o.length)return;
+  const ex=$('#exchange').value;
+  const sym=$('#symbol').value.trim().toUpperCase();
+  const tf=(typeof TF==='string'&&TF)?TF:'1h';
+  window.__historyLoading=true;
+  try{
+    log(`📥 fetching older history (before ${new Date(o[0][0]).toLocaleString('id-ID')})...`);
+    const tfMs={'1m':60e3,'5m':300e3,'15m':900e3,'30m':1800e3,'1h':3600e3,'4h':14400e3,'1d':86400e3}[tf]||3600e3;
+    const endTime=o[0][0]-1;
+    let older=[];
+    if(ex==='binance'){
+      const r=await safeFetch(`https://api.binance.com/api/v3/klines?symbol=${sym.replace('/','')}&interval=${tf}&endTime=${endTime}&limit=1000`);
+      if(r.ok){const j=await r.json();older=j.map(x=>[+x[0],+x[1],+x[2],+x[3],+x[4],+x[5]]);}
+    }else if(ex==='bybit'){
+      const map={'5m':'5','15m':'15','1h':'60','4h':'240','1d':'D'};
+      const start=endTime-1000*tfMs;
+      const r=await safeFetch(`https://api.bybit.com/v5/market/kline?category=spot&symbol=${sym.replace('/','')}&interval=${map[tf]||'60'}&start=${start}&end=${endTime}&limit=1000`);
+      if(r.ok){const j=await r.json();older=(j.result?.list||[]).map(x=>[+x[0],+x[1],+x[2],+x[3],+x[4],+x[5]]).reverse();}
+    }else if(ex==='okx'){
+      const map={'5m':'5m','15m':'15m','1h':'1H','4h':'4H','1d':'1D'};
+      const r=await safeFetch(`https://www.okx.com/api/v5/market/history-candles?instId=${sym.replace('/','-')}&bar=${map[tf]||'1H'}&after=${endTime}&limit=300`);
+      if(r.ok){const j=await r.json();older=(j.data||[]).map(x=>[+x[0],+x[1],+x[2],+x[3],+x[4],+x[5]]).reverse();}
+    }
+    if(!older.length){log('⚠️ no older data available');return;}
+    // dedupe & prepend
+    const existingFirst=o[0][0];
+    older=older.filter(b=>b[0]<existingFirst);
+    if(!older.length){log('⚠️ all returned bars already present');return;}
+    older.sort((a,b)=>a[0]-b[0]);
+    o.unshift(...older);
+    // shift offset biar view tetep di posisi yang sama
+    window.__chartView.offset+=older.length;
+    log(`✅ loaded ${older.length} older bars · total ${o.length}`);
+    redrawCandles();
+  }catch(e){log('❌ history load fail: '+e.message);}
+  finally{window.__historyLoading=false;}
+}
+
+/* trigger ke loadMoreHistory pas dekat mentok kiri */
+function checkLoadMore(){
+  const o=window.__lastOhlcv;if(!o)return;
+  const visN=Math.max(20,Math.floor(150*window.__chartView.zoom));
+  const off=window.__chartView.offset;
+  // kalau offset deket ke max (= mentok kiri), auto-load
+  if(off>=o.length-visN-30){
+    loadMoreHistory();
+  }
+}
+function redrawCandles(){
+  const o=window.__lastOhlcv;if(!o||!o.length)return;
+  try{
+    const closes=o.map(r=>r[4]),highs=o.map(r=>r[2]),lows=o.map(r=>r[3]);
+    const ma20S=SMA(closes,20),ma50S=SMA(closes,50),ma200S=SMA(closes,200);
+    const bb=BB(closes,20,2);
+    const sr=findSR(highs,lows,closes,5,3);
+    const fib=fibLevels(highs,lows,closes,Math.min(100,o.length));
+    drawCandles($('#cCandle'),o,{ma20:ma20S,ma50:ma50S,ma200:ma200S,bb},sr,fib);
+    drawVolume($('#cVol'),o);
+  }catch(e){log('redraw fail: '+e.message);}
+}
+(function setupChartPanZoom(){
+  const canvas=document.getElementById('cCandle');
+  if(!canvas)return;
+  let dragging=false,dragX=0,dragOff=0;
+  let pendingDraw=false;
+  const scheduleDraw=()=>{
+    if(pendingDraw)return;
+    pendingDraw=true;
+    requestAnimationFrame(()=>{pendingDraw=false;redrawCandles();drawCrosshair();});
+  };
+  // crosshair state
+  let cx=null,cy=null;
+  function drawCrosshair(){
+    const o=window.__lastOhlcv;if(!o||cx==null)return;
+    const ctx=canvas.getContext('2d');
+    const rect=canvas.getBoundingClientRect();
+    const W=rect.width,H=rect.height;
+    const v=window.__chartView;
+    const baseN=150;
+    const visN=Math.max(20,Math.min(o.length,Math.floor(baseN*v.zoom)));
+    const off=Math.max(0,Math.min(o.length-visN,v.offset|0));
+    const startIdx=Math.max(0,o.length-off-visN);
+    const data=o.slice(startIdx,o.length-off);
+    const N=data.length;if(!N)return;
+    const pad=22;
+    if(cx<pad||cx>W-pad||cy<pad||cy>H-pad)return;
+    // bar index under cursor
+    const i=Math.round((cx-pad)/((W-pad*2)/(N-1)));
+    if(i<0||i>=N)return;
+    const bar=data[i];if(!bar)return;
+    const xx=pad+(W-pad*2)*i/(N-1);
+    // dash lines
+    ctx.save();
+    ctx.strokeStyle='rgba(255,255,255,0.25)';
+    ctx.setLineDash([3,3]);
+    ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(xx,pad);ctx.lineTo(xx,H-pad);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(pad,cy);ctx.lineTo(W-pad,cy);ctx.stroke();
+    ctx.setLineDash([]);
+    // OHLC tooltip top-right
+    const t=new Date(bar[0]);
+    const fmtT=t=>t.toLocaleString('id-ID',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+    const txt=`${fmtT(t)}  O ${fmtP(bar[1])}  H ${fmtP(bar[2])}  L ${fmtP(bar[3])}  C ${fmtP(bar[4])}  V ${fmtBig(bar[5])}`;
+    ctx.font='10px ui-monospace';
+    const tw=ctx.measureText(txt).width;
+    ctx.fillStyle='rgba(10,15,25,0.9)';
+    ctx.fillRect(W-pad-tw-12,pad-2,tw+10,16);
+    ctx.fillStyle=bar[4]>=bar[1]?'#22c55e':'#ef4444';
+    ctx.fillText(txt,W-pad-tw-7,pad+9);
+    // price label at cursor (right axis)
+    // need same min/max as drawCandles — recompute quickly
+    const highs=data.map(r=>r[2]),lows=data.map(r=>r[3]);
+    let min=Math.min(...lows),max=Math.max(...highs);
+    const span=max-min;min-=span*0.02;max+=span*0.02;
+    const priceAtCursor=max-(cy-pad)/(H-pad*2)*(max-min);
+    const lbl=fmtP(priceAtCursor);
+    ctx.font='10px ui-monospace';
+    const lw=ctx.measureText(lbl).width;
+    ctx.fillStyle='#5eead4';
+    ctx.fillRect(W-pad-lw-8,cy-7,lw+8,14);
+    ctx.fillStyle='#0a0f19';
+    ctx.fillText(lbl,W-pad-lw-4,cy+3);
+    ctx.restore();
+  }
+  canvas.style.cursor='crosshair';
+  canvas.addEventListener('mousedown',e=>{
+    dragging=true;dragX=e.clientX;dragOff=window.__chartView.offset;
+    canvas.style.cursor='grabbing';
+  });
+  canvas.addEventListener('mousemove',e=>{
+    const rect=canvas.getBoundingClientRect();
+    cx=e.clientX-rect.left;cy=e.clientY-rect.top;
+    if(dragging){
+      const o=window.__lastOhlcv;if(!o)return;
+      const visN=Math.max(20,Math.floor(150*window.__chartView.zoom));
+      const pxPerBar=(rect.width-44)/Math.max(1,visN-1);
+      const dx=e.clientX-dragX;
+      const newOff=Math.max(0,Math.min(o.length-visN,Math.round(dragOff+dx/pxPerBar)));
+      if(newOff!==window.__chartView.offset){
+        window.__chartView.offset=newOff;
+        checkLoadMore();
+      }
+    }
+    scheduleDraw();
+  });
+  canvas.addEventListener('mouseleave',()=>{cx=null;cy=null;redrawCandles();});
+  window.addEventListener('mouseup',()=>{
+    if(dragging){dragging=false;canvas.style.cursor='crosshair';}
+  });
+  // wheel: zoom centered on cursor
+  canvas.addEventListener('wheel',e=>{
+    e.preventDefault();
+    const o=window.__lastOhlcv;if(!o)return;
+    const rect=canvas.getBoundingClientRect();
+    const mx=e.clientX-rect.left;
+    const W=rect.width,pad=22;
+    const oldZ=window.__chartView.zoom;
+    const newZ=Math.max(0.2,Math.min(8,oldZ*(e.deltaY>0?1.15:0.87)));
+    // bar under cursor sebelum zoom
+    const oldVisN=Math.max(20,Math.floor(150*oldZ));
+    const oldOff=Math.max(0,Math.min(o.length-oldVisN,window.__chartView.offset));
+    const oldStart=o.length-oldOff-oldVisN;
+    const cursorBar=oldStart+Math.round((mx-pad)/((W-pad*2)/(oldVisN-1)));
+    // hitung offset baru biar bar di cursor tetep di posisi yg sama
+    const newVisN=Math.max(20,Math.floor(150*newZ));
+    const newStart=cursorBar-Math.round((mx-pad)/((W-pad*2)/(newVisN-1)));
+    const newOff=Math.max(0,Math.min(o.length-newVisN,o.length-newStart-newVisN));
+    window.__chartView.zoom=newZ;
+    window.__chartView.offset=newOff;
+    scheduleDraw();
+  },{passive:false});
+  // double click → reset to live
+  canvas.addEventListener('dblclick',()=>{
+    window.__chartView.offset=0;
+    window.__chartView.zoom=1;
+    redrawCandles();
+  });
+  // nav buttons
+  const panBy=delta=>{
+    const o=window.__lastOhlcv;if(!o)return;
+    const visN=Math.max(20,Math.floor(150*window.__chartView.zoom));
+    window.__chartView.offset=Math.max(0,Math.min(o.length-visN,window.__chartView.offset+delta));
+    redrawCandles();
+  };
+  const zoomBy=mul=>{
+    window.__chartView.zoom=Math.max(0.2,Math.min(8,window.__chartView.zoom*mul));
+    redrawCandles();
+  };
+  document.getElementById('panL')?.addEventListener('click',()=>{panBy(50);checkLoadMore();});
+  document.getElementById('panR')?.addEventListener('click',()=>panBy(-50));
+  document.getElementById('panFarL')?.addEventListener('click',()=>{
+    const o=window.__lastOhlcv;if(!o)return;
+    const visN=Math.max(20,Math.floor(150*window.__chartView.zoom));
+    window.__chartView.offset=o.length-visN;
+    redrawCandles();
+    checkLoadMore();
+  });
+  document.getElementById('panFarR')?.addEventListener('click',()=>{
+    window.__chartView.offset=0;
+    redrawCandles();
+  });
+  document.getElementById('zoomIn')?.addEventListener('click',()=>zoomBy(0.7));
+  document.getElementById('zoomOut')?.addEventListener('click',()=>zoomBy(1.4));
+  // keyboard arrows when chart focused
+  canvas.tabIndex=0;
+  canvas.addEventListener('keydown',e=>{
+    if(e.key==='ArrowLeft'){panBy(20);e.preventDefault();}
+    else if(e.key==='ArrowRight'){panBy(-20);e.preventDefault();}
+    else if(e.key==='+'||e.key==='='){zoomBy(0.7);e.preventDefault();}
+    else if(e.key==='-'){zoomBy(1.4);e.preventDefault();}
+    else if(e.key==='Home'){window.__chartView.offset=0;window.__chartView.zoom=1;redrawCandles();e.preventDefault();}
+  });
+  // touch support (mobile)
+  let tStartX=0,tStartOff=0,tPinchD=0,tPinchZ=1;
+  canvas.addEventListener('touchstart',e=>{
+    if(e.touches.length===1){tStartX=e.touches[0].clientX;tStartOff=window.__chartView.offset;}
+    else if(e.touches.length===2){
+      const dx=e.touches[0].clientX-e.touches[1].clientX;
+      const dy=e.touches[0].clientY-e.touches[1].clientY;
+      tPinchD=Math.hypot(dx,dy);
+      tPinchZ=window.__chartView.zoom;
+    }
+  });
+  canvas.addEventListener('touchmove',e=>{
+    e.preventDefault();
+    const o=window.__lastOhlcv;if(!o)return;
+    if(e.touches.length===1){
+      const rect=canvas.getBoundingClientRect();
+      const visN=Math.max(20,Math.floor(150*window.__chartView.zoom));
+      const pxPerBar=(rect.width-44)/Math.max(1,visN-1);
+      const dx=e.touches[0].clientX-tStartX;
+      const newOff=Math.max(0,Math.min(o.length-visN,Math.round(tStartOff+dx/pxPerBar)));
+      if(newOff!==window.__chartView.offset){
+        window.__chartView.offset=newOff;
+        scheduleDraw();
+      }
+    }else if(e.touches.length===2){
+      const dx=e.touches[0].clientX-e.touches[1].clientX;
+      const dy=e.touches[0].clientY-e.touches[1].clientY;
+      const d=Math.hypot(dx,dy);
+      const ratio=tPinchD>0?d/tPinchD:1;
+      window.__chartView.zoom=Math.max(0.2,Math.min(8,tPinchZ/ratio));
+      scheduleDraw();
+    }
+  },{passive:false});
+})();
+
+/* boot the new modules */
+function bootNewModules(){
+  refreshXFunding();
+  refreshNews();
+  startWs();
+  setInterval(refreshXFunding,60000);
+  setInterval(refreshNews,180000);
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bootNewModules);
+else bootNewModules();
+
+/* ============================================================
+   ⏪ Replay mode — scrub historical OHLCV
+============================================================ */
+function applyReplay(pct){
+  const full=window.__lastOhlcv;if(!full||!full.length)return;
+  const n=Math.max(50,Math.floor(full.length*pct/100));
+  const slice=full.slice(0,n);
+  const closes=slice.map(r=>r[4]),highs=slice.map(r=>r[2]),lows=slice.map(r=>r[3]);
+  const last=closes.at(-1);
+  try{
+    const ma20S=SMA(closes,20),ma50S=SMA(closes,50),ma200S=SMA(closes,200);
+    const bb=BB(closes,20,2);
+    const sr=findSR(highs,lows,closes,5,3);
+    const fib=fibLevels(highs,lows,closes,Math.min(100,slice.length));
+    drawCandles($('#cCandle'),slice,{ma20:ma20S,ma50:ma50S,ma200:ma200S,bb},sr,fib);
+    drawVolume($('#cVol'),slice);
+    drawVolumeProfile($('#cVP'),slice);
+    drawLiqMap($('#cLiq'),last);
+    const lbl=$('#replayLabel');
+    if(lbl){
+      const t=new Date(slice.at(-1)[0]);
+      lbl.textContent=pct>=100?'live':t.toLocaleString('id-ID',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+    }
+  }catch(e){log('replay fail: '+e.message);}
+}
+$('#replaySlider')?.addEventListener('input',e=>applyReplay(+e.target.value));
+$('#replayReset')?.addEventListener('click',()=>{
+  const s=$('#replaySlider');if(s){s.value=100;applyReplay(100);}
+  // also reset pan/zoom
+  if(window.__chartView){window.__chartView.offset=0;window.__chartView.zoom=1;}
+  redrawCandles();
+});
+
+/* ============================================================
+   🚨 Anomaly detector — volume / funding / spread / RSI / OI
+============================================================ */
+function detectAnomalies(ohlcv,funding,spread,rsi,ob){
+  const flags=[];
+  if(ohlcv?.length>30){
+    const vols=ohlcv.map(r=>r[5]);
+    const recent=vols.slice(-30,-1);
+    const mean=recent.reduce((s,v)=>s+v,0)/recent.length;
+    const std=Math.sqrt(recent.reduce((s,v)=>s+(v-mean)**2,0)/recent.length);
+    const z=(vols.at(-1)-mean)/(std||1);
+    if(z>3)flags.push({lvl:'high',txt:`📈 vol spike ${z.toFixed(1)}σ`,col:'#fbbf24'});
+    else if(z>2)flags.push({lvl:'mid',txt:`vol ${z.toFixed(1)}σ`,col:'#a78bfa'});
+  }
+  if(funding!=null&&Math.abs(funding)>0.001)
+    flags.push({lvl:'high',txt:`⚡ funding ${(funding*100).toFixed(3)}%`,col:funding>0?'#ef4444':'#22c55e'});
+  if(spread!=null&&Math.abs(spread)>0.05)
+    flags.push({lvl:'high',txt:`🔀 spread ${spread.toFixed(2)}%`,col:'#fbbf24'});
+  if(rsi!=null){
+    if(rsi>80)flags.push({lvl:'high',txt:`🔥 RSI ${rsi.toFixed(0)} OB`,col:'#ef4444'});
+    else if(rsi<20)flags.push({lvl:'high',txt:`💎 RSI ${rsi.toFixed(0)} OS`,col:'#22c55e'});
+  }
+  if(ob){
+    const bidVol=(ob.bids||[]).slice(0,20).reduce((s,b)=>s+(+b[1]||0),0);
+    const askVol=(ob.asks||[]).slice(0,20).reduce((s,a)=>s+(+a[1]||0),0);
+    const ratio=bidVol/(askVol||1);
+    if(ratio>2)flags.push({lvl:'mid',txt:`🟢 bid wall ${ratio.toFixed(1)}x`,col:'#22c55e'});
+    else if(ratio<0.5)flags.push({lvl:'mid',txt:`🔴 ask wall ${(1/ratio).toFixed(1)}x`,col:'#ef4444'});
+  }
+  return flags;
+}
+function renderAnomalyBadges(flags){
+  const el=$('#anomalyBadges');if(!el)return;
+  if(!flags.length){el.innerHTML='';return;}
+  el.innerHTML=flags.map(f=>`<span class="badge" style="color:${f.col};border-color:${f.col}55;background:${f.col}1a">${f.txt}</span>`).join('');
+}
+
+/* hook anomaly detection ke runAnalysis flow lewat patcher (tanpa re-edit fungsi besar) */
+const __origLog=window.log;
+window.addEventListener('analysisDone',e=>{
+  const{ohlcv,funding,rsi,ob,spread}=e.detail||{};
+  const flags=detectAnomalies(ohlcv,funding,spread,rsi,ob);
+  renderAnomalyBadges(flags);
+  if(flags.length)log('🚨 anomaly: '+flags.map(f=>f.txt).join(' · '));
+});
+
+/* patch run(): dispatch event setelah selesai (function di scope module, akses via eval-style) */
+(function(){
+  // run() di-define di module scope, jadi kita override via wrapping #run button click instead
+  const btn=document.getElementById('run');
+  if(!btn)return;
+  btn.addEventListener('click',()=>{
+    // tunggu sebentar habis run() selesai (loop poll __lastOhlcv update)
+    let lastT=window.__lastOhlcvT||0;
+    const t0=Date.now();
+    const poll=setInterval(()=>{
+      if((window.__lastOhlcvT||0)>lastT||Date.now()-t0>30000){
+        clearInterval(poll);
+        try{
+          const o=window.__lastOhlcv;if(!o)return;
+          const closes=o.map(r=>r[4]);
+          const rsi=RSI(closes,14).at(-1);
+          window.dispatchEvent(new CustomEvent('analysisDone',{detail:{
+            ohlcv:o,funding:window.__lastFunding,rsi,ob:window.__lastOB,spread:null
+          }}));
+        }catch{}
+      }
+    },500);
+  });
+})();
 
 </script>
 </body>
