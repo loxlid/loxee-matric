@@ -3699,19 +3699,19 @@ window.addEventListener('analysisDone',e=>{
 /* ====================== Loxee Agent — ALL FUTURES, multi-position, live mark, deterministic ====================== */
 (function loxeeAgent(){
   const BORN_AT     = Date.UTC(2026,4,17,0,0,0);
-  const TF          = '5m';
-  const TF_MS       = 5*60*1000;
+  const TF          = '3m';
+  const TF_MS       = 3*60*1000;
   const START_EQ    = 100;
   const LEV_MIN     = 10;
   const LEV_MAX     = 100;
   const MARGIN_PCT  = 0.04;
-  const MAX_CONCURRENT = 6;
+  const MAX_CONCURRENT = 8;
   const FEE         = 0.0004;
-  const SL_ATR_MULT = 1.5;
-  const TP_ATR_MULT = 3.0;
+  const SL_ATR_MULT = 1.4;
+  const TP_ATR_MULT = 2.6;
   const FETCH_CONC  = 12;
   const PRICE_TICK  = 1000;
-  const HEAVY_CHECK = 30000;
+  const HEAVY_CHECK = 15000;
   const WARMUP      = 50;
 
   let state = null;
@@ -3913,28 +3913,38 @@ window.addEventListener('analysisDone',e=>{
       if(s.positions.length>=MAX_CONCURRENT)continue;
 
       let score=0;const reasons=[];
-      if(rsi<28){score+=2;reasons.push('RSI deep oversold');}
-      else if(rsi<35){score+=1;reasons.push('RSI oversold');}
-      else if(rsi>72){score-=2;reasons.push('RSI deep overbought');}
-      else if(rsi>65){score-=1;reasons.push('RSI overbought');}
+      if(rsi<25){score+=2.2;reasons.push('RSI deep oversold');}
+      else if(rsi<35){score+=1.2;reasons.push('RSI oversold');}
+      else if(rsi<42){score+=0.5;reasons.push('RSI cool');}
+      else if(rsi>75){score-=2.2;reasons.push('RSI deep overbought');}
+      else if(rsi>65){score-=1.2;reasons.push('RSI overbought');}
+      else if(rsi>58){score-=0.5;reasons.push('RSI hot');}
       if(e9>e21&&e21>e50){score+=1;reasons.push('EMA stack bull');}
+      else if(e9>e21){score+=0.5;reasons.push('short EMA bull');}
       else if(e9<e21&&e21<e50){score-=1;reasons.push('EMA stack bear');}
+      else if(e9<e21){score-=0.5;reasons.push('short EMA bear');}
       if(mh>0&&mhPrev<=0){score+=1.5;reasons.push('MACD cross up');}
+      else if(mh>0&&mh>mhPrev){score+=0.6;reasons.push('MACD bull rising');}
       else if(mh<0&&mhPrev>=0){score-=1.5;reasons.push('MACD cross down');}
-      if(last<=bbDn*1.003){score+=1.2;reasons.push('BB lower break');}
-      else if(last>=bbUp*0.997){score-=1.2;reasons.push('BB upper break');}
+      else if(mh<0&&mh<mhPrev){score-=0.6;reasons.push('MACD bear rising');}
+      if(last<=bbDn*1.005){score+=1.2;reasons.push('BB lower break');}
+      else if(last>=bbUp*0.995){score-=1.2;reasons.push('BB upper break');}
+      /* candle body momentum */
+      const open=d.opens[i];
+      const bodyPct=(last-open)/open;
+      if(bodyPct>0.008){score+=0.6;reasons.push('strong bull candle');}
+      else if(bodyPct<-0.008){score-=0.6;reasons.push('strong bear candle');}
 
       let side=null;
-      if(score>=2.5)side='LONG';
-      else if(score<=-2.5)side='SHORT';
+      if(score>=2.0)side='LONG';
+      else if(score<=-2.0)side='SHORT';
       if(!side)continue;
 
       /* dynamic leverage based on conviction × inverse volatility */
-      const conviction=Math.min(1,(Math.abs(score)-2.5)/3); // 0..1
-      const volPct=atr/last; // ATR as % of price
-      const calmness=Math.max(0,Math.min(1,1-volPct/0.04)); // calm=1, volatile=0
+      const conviction=Math.min(1,(Math.abs(score)-2.0)/3); // 0..1
+      const volPct=atr/last;
+      const calmness=Math.max(0,Math.min(1,1-volPct/0.04));
       let leverage=Math.round(LEV_MIN+(LEV_MAX-LEV_MIN)*(0.4*conviction+0.6*calmness));
-      // safety: stop must not be within liquidation distance (1/lev). add 30% buffer.
       const maxLevForStop=Math.floor(0.7/Math.max(1e-9,SL_ATR_MULT*volPct));
       leverage=Math.max(LEV_MIN,Math.min(LEV_MAX,leverage,maxLevForStop));
 
