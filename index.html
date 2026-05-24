@@ -3744,35 +3744,21 @@ window.addEventListener('analysisDone',e=>{
     return out;
   }
 
+  /* hardcoded universe — same set for every viewer guarantees deterministic replay */
+  const UNIVERSE = [
+    'AAVEUSDT','ADAUSDT','APEUSDT','APTUSDT','ARBUSDT','ATOMUSDT','AVAXUSDT','AXSUSDT',
+    'BCHUSDT','BLURUSDT','BNBUSDT','BONKUSDT','BTCUSDT','CELOUSDT','COMPUSDT','CRVUSDT',
+    'DOGEUSDT','DOTUSDT','DYDXUSDT','ENSUSDT','ETHUSDT','FILUSDT','FLOKIUSDT','FTMUSDT',
+    'GALAUSDT','GMTUSDT','GRTUSDT','ICPUSDT','IMXUSDT','INJUSDT','JTOUSDT','JUPUSDT',
+    'KASUSDT','KAVAUSDT','LDOUSDT','LINKUSDT','LTCUSDT','MANAUSDT','MATICUSDT','MKRUSDT',
+    'NEARUSDT','OPUSDT','ORDIUSDT','PEPEUSDT','PYTHUSDT','RNDRUSDT','ROSEUSDT','RUNEUSDT',
+    'SANDUSDT','SEIUSDT','SHIBUSDT','SNXUSDT','SOLUSDT','STXUSDT','SUIUSDT','TIAUSDT',
+    'TRXUSDT','UNIUSDT','WIFUSDT','XRPUSDT'
+  ];
+
   async function fetchSymbolList(){
-    setMeta('fetching market list…');
-    try{
-      /* fetch all perps + 24h volume to rank by liquidity */
-      const [exR, volR] = await Promise.all([
-        safeFetch('https://fapi.binance.com/fapi/v1/exchangeInfo'),
-        safeFetch('https://fapi.binance.com/fapi/v1/ticker/24hr')
-      ]);
-      const ex = await exR.json();
-      const vol = await volR.json();
-      const valid = new Set(
-        ex.symbols.filter(s=>
-          s.contractType==='PERPETUAL'&&
-          s.quoteAsset==='USDT'&&
-          s.status==='TRADING'
-        ).map(s=>s.symbol)
-      );
-      /* sort by quoteVolume DESC, take top 100 most liquid */
-      const ranked = vol
-        .filter(v=>valid.has(v.symbol))
-        .map(v=>({s:v.symbol,q:+v.quoteVolume||0}))
-        .sort((a,b)=>b.q-a.q)
-        .slice(0,100)
-        .map(v=>v.s);
-      return ranked;
-    }catch(e){
-      console.error('[loxee-agent] symbols fetch failed',e);
-      return ['BTCUSDT','ETHUSDT','SOLUSDT','BNBUSDT','XRPUSDT','DOGEUSDT','ADAUSDT','AVAXUSDT','LINKUSDT','LTCUSDT'];
-    }
+    /* universe is fixed and shared across viewers — no dynamic ranking */
+    return UNIVERSE.slice();
   }
 
   async function fetchKlinesFor(sym, since){
@@ -3818,19 +3804,27 @@ window.addEventListener('analysisDone',e=>{
   }
 
   function replay(symMap){
+    /* Deterministic horizon: only events whose candle has closed by the most recent
+       TF boundary BEFORE now. This collapses tiny clock differences (1-2s) between
+       viewers into the exact same bucket → identical replay. */
+    const horizonClose = Math.floor(Date.now()/TF_MS)*TF_MS; // last fully-closed candle close ts
     const ind={};
     let totalCandles=0;
     const events=[];
     for(const sym of Object.keys(symMap)){
-      const kl=symMap[sym];
-      if(!kl||kl.length<WARMUP+5)continue;
+      const klRaw=symMap[sym];
+      if(!klRaw||klRaw.length<WARMUP+5)continue;
+      /* trim to candles whose close <= horizon */
+      const kl=klRaw.filter(c=>c[0]+TF_MS<=horizonClose);
+      if(kl.length<WARMUP+5)continue;
       ind[sym]=precompute(kl);
       totalCandles+=kl.length;
       for(let i=WARMUP;i<kl.length-1;i++){
         events.push({ts:kl[i][0]+TF_MS,sym,i});
       }
     }
-    events.sort((a,b)=>a.ts-b.ts);
+    /* Stable sort: by ts, then symbol alphabetic — guarantees identical event order across viewers */
+    events.sort((a,b)=>a.ts-b.ts||(a.sym<b.sym?-1:a.sym>b.sym?1:0));
 
     const s={
       eq:START_EQ,peakEq:START_EQ,trough:START_EQ,
