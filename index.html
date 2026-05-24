@@ -3744,41 +3744,50 @@ window.addEventListener('analysisDone',e=>{
     return out;
   }
 
-  /* hardcoded universe — same set for every viewer guarantees deterministic replay */
+  /* hardcoded universe — small, reliable, always-on Binance perps */
   const UNIVERSE = [
-    'AAVEUSDT','ADAUSDT','APEUSDT','APTUSDT','ARBUSDT','ATOMUSDT','AVAXUSDT','AXSUSDT',
-    'BCHUSDT','BLURUSDT','BNBUSDT','BONKUSDT','BTCUSDT','CELOUSDT','COMPUSDT','CRVUSDT',
-    'DOGEUSDT','DOTUSDT','DYDXUSDT','ENSUSDT','ETHUSDT','FILUSDT','FLOKIUSDT','FTMUSDT',
-    'GALAUSDT','GMTUSDT','GRTUSDT','ICPUSDT','IMXUSDT','INJUSDT','JTOUSDT','JUPUSDT',
-    'KASUSDT','KAVAUSDT','LDOUSDT','LINKUSDT','LTCUSDT','MANAUSDT','MATICUSDT','MKRUSDT',
-    'NEARUSDT','OPUSDT','ORDIUSDT','PEPEUSDT','PYTHUSDT','RNDRUSDT','ROSEUSDT','RUNEUSDT',
-    'SANDUSDT','SEIUSDT','SHIBUSDT','SNXUSDT','SOLUSDT','STXUSDT','SUIUSDT','TIAUSDT',
-    'TRXUSDT','UNIUSDT','WIFUSDT','XRPUSDT'
+    'BTCUSDT','ETHUSDT','SOLUSDT','BNBUSDT','XRPUSDT','DOGEUSDT','ADAUSDT','AVAXUSDT',
+    'LINKUSDT','LTCUSDT','MATICUSDT','DOTUSDT','TRXUSDT','BCHUSDT','UNIUSDT','ATOMUSDT',
+    'NEARUSDT','APTUSDT','FILUSDT','ARBUSDT','OPUSDT','SUIUSDT','INJUSDT','PEPEUSDT',
+    'SHIBUSDT','TIAUSDT','SEIUSDT','RUNEUSDT','LDOUSDT','AAVEUSDT'
   ];
 
   async function fetchSymbolList(){
-    /* universe is fixed and shared across viewers — no dynamic ranking */
     return UNIVERSE.slice();
   }
 
-  async function fetchKlinesFor(sym, since){
-    const all=[];
-    let cur=since||BORN_AT;
-    let guard=0;
-    while(cur<Date.now()&&guard++<5){
-      const url=`https://fapi.binance.com/fapi/v1/klines?symbol=${sym}&interval=${TF}&startTime=${cur}&limit=1500`;
-      const r=await safeFetch(url);
-      if(!r||!r.ok)break;
-      const j=await r.json();
-      if(!Array.isArray(j)||!j.length)break;
-      const m=j.map(k=>[+k[0],+k[1],+k[2],+k[3],+k[4],+k[5]]);
-      all.push(...m);
-      const nxt=m[m.length-1][0]+TF_MS;
-      if(nxt<=cur)break;
-      cur=nxt;
-      if(j.length<1500)break;
+  /* retry wrapper for transient fetch failures */
+  async function withRetry(fn, attempts){
+    let lastErr;
+    for(let i=0;i<attempts;i++){
+      try{return await fn();}
+      catch(e){lastErr=e;await new Promise(r=>setTimeout(r,300+i*400));}
     }
-    return all;
+    throw lastErr;
+  }
+
+  async function fetchKlinesFor(sym, since){
+    return await withRetry(async()=>{
+      const all=[];
+      let cur=since||BORN_AT;
+      let guard=0;
+      while(cur<Date.now()&&guard++<5){
+        const url=`https://fapi.binance.com/fapi/v1/klines?symbol=${sym}&interval=${TF}&startTime=${cur}&limit=1500`;
+        const r=await safeFetch(url);
+        if(!r||!r.ok)throw new Error('http '+(r&&r.status));
+        const j=await r.json();
+        if(!Array.isArray(j))throw new Error('bad payload');
+        if(!j.length)break;
+        const m=j.map(k=>[+k[0],+k[1],+k[2],+k[3],+k[4],+k[5]]);
+        all.push(...m);
+        const nxt=m[m.length-1][0]+TF_MS;
+        if(nxt<=cur)break;
+        cur=nxt;
+        if(j.length<1500)break;
+      }
+      if(!all.length)throw new Error('empty');
+      return all;
+    },4);
   }
 
   async function fetchAllPrices(){
@@ -4121,18 +4130,29 @@ window.addEventListener('analysisDone',e=>{
     if(!klMap){
       symbolUniverse=await fetchSymbolList();
       const N=symbolUniverse.length;
-      klMap={};
+      const tmpMap={};
+      const failed=[];
       const t0=Date.now();
       const arr=await pool(symbolUniverse,FETCH_CONC,async(sym)=>{
-        return await fetchKlinesFor(sym);
+        try{return {sym,kl:await fetchKlinesFor(sym)};}
+        catch(e){return {sym,kl:null,err:String(e)};}
       },(d,t)=>{
-        if(d%10===0||d===t)setMeta(`syncing ${N} markets… ${d}/${t}`);
+        if(d%5===0||d===t)setMeta(`syncing ${N} markets… ${d}/${t}`);
       });
-      symbolUniverse.forEach((sym,i)=>{
-        if(arr[i]&&arr[i].length)klMap[sym]=arr[i];
+      arr.forEach(r=>{
+        if(r&&r.kl&&r.kl.length>WARMUP+5)tmpMap[r.sym]=r.kl;
+        else failed.push((r&&r.sym)||'?');
       });
       const dt=((Date.now()-t0)/1000).toFixed(1);
-      console.log('[loxee-agent] initial fetch',Object.keys(klMap).length,'markets in',dt,'s');
+      console.log('[loxee-agent] initial fetch',Object.keys(tmpMap).length,'/',N,'markets in',dt,'s · failed:',failed.join(',')||'none');
+      /* deterministic: require ALL universe symbols loaded — no partial replay */
+      if(Object.keys(tmpMap).length<N){
+        setMeta(`loaded ${Object.keys(tmpMap).length}/${N} markets · retrying missing…`);
+        /* schedule retry for failed ones in 3s */
+        setTimeout(()=>heavyTick(true).catch(()=>{}),3000);
+        return;
+      }
+      klMap=tmpMap;
     }else{
       setMeta('updating candles…');
       const syms=Object.keys(klMap);
@@ -4140,12 +4160,14 @@ window.addEventListener('analysisDone',e=>{
         const cur=klMap[sym];
         if(!cur||!cur.length)return;
         const lastTs=cur[cur.length-1][0];
-        const newKl=await fetchKlinesFor(sym,lastTs);
-        if(!newKl||!newKl.length)return;
-        for(const k of newKl){
-          if(k[0]>lastTs)cur.push(k);
-          else if(k[0]===lastTs)cur[cur.length-1]=k;
-        }
+        try{
+          const newKl=await fetchKlinesFor(sym,lastTs);
+          if(!newKl||!newKl.length)return;
+          for(const k of newKl){
+            if(k[0]>lastTs)cur.push(k);
+            else if(k[0]===lastTs)cur[cur.length-1]=k;
+          }
+        }catch(e){/* keep old data */}
       });
     }
 
